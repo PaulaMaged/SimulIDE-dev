@@ -1,1 +1,3 @@
 resources/qm/*.*
+build_XX/*
+!build_XX/SimulIDE_Build.pro

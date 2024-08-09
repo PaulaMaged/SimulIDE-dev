@@ -10,6 +10,7 @@
 
 #include "mainwindow.h"
 #include "circuitwidget.h"
+#include "TCP.h"
 
 void myMessageOutput( QtMsgType type, const QMessageLogContext &context, const QString &msg )
 {
@@ -79,6 +80,8 @@ int main( int argc, char *argv[] )
         QString circ = QString::fromStdString( argv[1] );
         if( circ.endsWith(".sim1") ) CircuitWidget::self()->loadCirc( circ );
     }
+
+    readData();
 
     return app.exec();
 }
