@@ -11,6 +11,7 @@ QT += widgets
 QT += concurrent
 QT += serialport
 QT += multimedia widgets
+QT += network
 
 SOURCES      = $$files( $$PWD/src/*.cpp, true )
 HEADERS      = $$files( $$PWD/src/*.h, true )
@@ -73,7 +74,8 @@ INCLUDEPATH += $$PWD/src \
     $$PWD/src/microsim/modules/script\
     $$PWD/src/angel/include \
     $$PWD/src/angel/JIT \
-    $$PWD/src/angel/src
+    $$PWD/src/angel/src \
+    $$PWD/src/Networks
 
 QMAKE_CXXFLAGS += -Wno-unused-parameter
 QMAKE_CXXFLAGS += -Wno-implicit-fallthrough
@@ -119,13 +121,31 @@ BUILD_DATE = $$system($(which date) +\"\\\"%d-%m-%y\\\"\")
 DEFINES += BUILDDATE=\\\"$$BUILD_DATE\\\"
 
 TARGET_NAME   = SimulIDE_$$VERSION$$RELEASE
-TARGET_PREFIX = $$BUILD_DIR/executables/$$TARGET_NAME
+TARGET_PREFIX = $$BUILD_DIR/Data_Examples
 
-OBJECTS_DIR *= $$OUT_PWD/build/objects
-MOC_DIR     *= $$OUT_PWD/build/moc
-INCLUDEPATH += $$MOC_DIR
+build_pass:CONFIG(debug, debug|release) {
+    message("debug")
+    OBJECTS_DIR *= $$OUT_PWD/debug/objects
+    MOC_DIR     *= $$OUT_PWD/debug/moc
+    INCLUDEPATH += $$MOC_DIR
+    DESTDIR = $$OUT_PWD/debug/executable
+    TARGET = $$TARGET_NAME"_Debug"
+}
 
-DESTDIR = $$TARGET_PREFIX
+build_pass:CONFIG(release, debug|release) {
+    message("release")
+    OBJECTS_DIR *= $$OUT_PWD/release/objects
+    MOC_DIR     *= $$OUT_PWD/release/moc
+    INCLUDEPATH += $$MOC_DIR
+    DESTDIR = $$OUT_PWD/release/executable
+    TARGET = $$TARGET_NAME
+}
+
+#OBJECTS_DIR *= $$OUT_PWD/build/objects
+#MOC_DIR     *= $$OUT_PWD/build/moc
+#INCLUDEPATH += $$MOC_DIR
+
+#DESTDIR = $$TARGET_PREFIX
 
 win32 | linux {
     mkpath( $$TARGET_PREFIX/data )
