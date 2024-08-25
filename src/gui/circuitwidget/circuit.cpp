@@ -115,13 +115,8 @@ QString Circuit::getSeqNumber( QString name )
 QString Circuit::replaceId( QString pinName )
 {
     QStringList words = pinName.split("-");
-    QString pinId = words.takeLast();
-    QString compNumber = words.takeLast();
-    bool ok;
-    compNumber.toInt( &ok );
-    if( ok ) return words.join("-")+"-"+compNumber+"-"+pinId;
 
-    /*for( int i=1; i<words.size(); ++i )    // Start at second word, first must be name
+    for( int i=1; i<words.size(); ++i )    // Start at second word, first must be name
     {
         QString word = words.at( i );
         bool ok;
@@ -131,7 +126,7 @@ QString Circuit::replaceId( QString pinName )
             break;
         }
     }
-    return words.join("-");*/
+    return words.join("-");
     return pinName;
 }
 
@@ -330,12 +325,13 @@ void Circuit::loadStrDoc( QString &doc )
                     comp->setup();
 
                     if( m_pasting ) comp->setIdLabel( newUid );
-                    comp->updtLabelPos();
-                    comp->updtValLabelPos();
+                    else            addItem( comp );
 
-                    addItem( comp );
                     if( type == "Package" ) compList.prepend( comp );
                     else                    compList.append( comp );
+
+                    comp->updtLabelPos();
+                    comp->updtValLabelPos();
 
                     if( comp->m_isLinker ){
                         Linker* l = dynamic_cast<Linker*>(comp);
@@ -391,6 +387,7 @@ void Circuit::loadStrDoc( QString &doc )
         for( Component* comp : compList ){
             comp->setSelected( true );
             comp->move( m_deltaMove );
+            addComponent( comp );
         }
         for( Node* nod : nodeList ){
             nod->setSelected( true );
@@ -401,11 +398,14 @@ void Circuit::loadStrDoc( QString &doc )
             con->move( m_deltaMove );
         }
     }
-    else for( Component* comp : compList ) { comp->moveSignal(); }
+    else
+    {
+        for( Component* comp : compList ) comp->moveSignal();
+        m_compList = compList;
+    }
 
     m_nodeList += nodeList;
     m_connList += connList;
-    m_compList += compList;
 
     if( !m_undo && !m_redo ) // Take care about unconnected Joints
         for( Node* joint : nodeList ) joint->checkRemove(); // Only removed if some missing connector
@@ -1122,30 +1122,28 @@ void Circuit::keyReleaseEvent( QKeyEvent* event )
 
 void Circuit::dropEvent( QGraphicsSceneDragDropEvent* event )
 {
-    QString id   = event->mimeData()->text();
-    QString file = "file://";
-//qDebug() << "Circuit::dropEvent";
-    if( id.startsWith( file ) )
-    {
-        id.replace( file, "" ).replace("\r\n", "" ).replace("%20", " ");
+    QString file = event->mimeData()->text();
+    QString f = "file://";
+
+    if( file.startsWith( f ) ) file.replace( f, "" ).replace("\r\n", "" ).replace("%20", " ");
+
 #ifdef _WIN32
-        if( id.startsWith( "/" )) id.remove( 0, 1 );
+    if( file.startsWith( "/" )) file.remove( 0, 1 );
 #endif
-        QString loId = id.toLower();
-        if( loId.endsWith( ".jpg") || loId.endsWith( ".png") || loId.endsWith( ".gif"))
+
+    QString loId = file.toLower();
+    if( loId.endsWith( ".jpg") || loId.endsWith( ".png") || loId.endsWith( ".gif"))
+    {
+        Component* enterItem = createItem( "Image", newSceneId() );
+        if( enterItem )
         {
-            file = id;
-            Component* enterItem = createItem( "Image", newSceneId() );
-            if( enterItem )
-            {
-                QPoint cPos = QCursor::pos()-CircuitView::self()->mapToGlobal( QPoint(0,0));
-                enterItem->setPos( CircuitView::self()->mapToScene( cPos ) );
-                enterItem->setBackground( file );
-                addComponent( enterItem );
-                saveCompChange( enterItem->getUid(), COMP_STATE_NEW, "" );
-        }   }
-        else CircuitWidget::self()->loadCirc( id );
-}
+            QPoint cPos = QCursor::pos()-CircuitView::self()->mapToGlobal( QPoint(0,0));
+            enterItem->setPos( CircuitView::self()->mapToScene( cPos ) );
+            enterItem->setBackground( file );
+            addComponent( enterItem );
+            saveCompChange( enterItem->getUid(), COMP_STATE_NEW, "" );
+    }   }
+    else if( file.endsWith(".sim1") ) CircuitWidget::self()->loadCirc( file );
 }
 
 void Circuit::drawBackground( QPainter* painter, const QRectF &rect )

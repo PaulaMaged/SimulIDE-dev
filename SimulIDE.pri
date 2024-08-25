@@ -70,6 +70,7 @@ INCLUDEPATH += $$PWD/src \
     $$PWD/src/microsim/modules/memory \
     $$PWD/src/microsim/modules/usart \
     $$PWD/src/microsim/modules/twi \
+    $$PWD/src/microsim/modules/tcp\
     $$PWD/src/microsim/modules/spi\
     $$PWD/src/microsim/modules/script\
     $$PWD/src/angel/include \
